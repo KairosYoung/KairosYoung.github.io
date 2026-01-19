@@ -1,0 +1,15 @@
+# 阻止 OpenAI 的爬虫
+User-agent: GPTBot
+Disallow: /
+
+# 阻止 Google AI 的爬虫 (用于 Vertex AI 和 Bard)
+User-agent: Google-Extended
+Disallow: /
+
+# 阻止 Common Crawl (一个被很多 AI 公司使用的大型公共数据集)
+User-agent: CCBot
+Disallow: /
+
+# 阻止 Anthropic (Claude 的开发公司) 的爬虫
+User-agent: anthropic-ai
+Disallow: /
