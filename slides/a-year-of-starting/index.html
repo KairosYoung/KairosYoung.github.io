@@ -1,0 +1,1841 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A Year of Starting</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,600;6..72,700;6..72,800&family=Noto+Serif+SC:wght@500;600;700;900&family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+/* ===========================================
+   THEME TOKENS
+   Change colors and fonts here for the whole deck.
+   =========================================== */
+:root {
+    --stage-bg: #10242a;
+    --slide-bg: #fbf0dc;
+    --paper: #fbf0dc;
+    --paper-light: #fff8e9;
+    --ink: #10242a;
+    --muted: rgba(16, 36, 42, 0.62);
+    --line: rgba(16, 36, 42, 0.18);
+    --coral: #ff5a3d;
+    --cobalt: #255cff;
+    --teal: #00a99d;
+    --lemon: #d8ff45;
+    --leaf: #18aa66;
+    --rose: #ff8fb3;
+    --gold: #d99a19;
+    --accent-soft: rgba(255, 90, 61, 0.16);
+    --shadow: #10242a;
+    --font-display: "Newsreader", "Noto Serif SC", serif;
+    --font-cn: "Noto Sans SC", sans-serif;
+    --font-mono: "IBM Plex Mono", monospace;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ===========================================
+   RESET
+   Keeps authored slide dimensions stable.
+   =========================================== */
+* {
+    box-sizing: border-box;
+}
+
+/* ===========================================
+   FIXED 16:9 STAGE: MANDATORY BASE STYLES
+   Include this ENTIRE file in every presentation.
+   Slides are authored at 1920×1080 and scaled as a whole.
+   =========================================== */
+
+/* 1. Lock the browser viewport */
+html,
+body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+
+/* 2. Full-window deck viewport */
+.deck-viewport {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    background: var(--stage-bg, #000);
+}
+
+/* 3. Fixed 16:9 design canvas.
+   JavaScript sets transform: translate(...) scale(...). */
+.deck-stage {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    transform-origin: 0 0;
+    background: var(--slide-bg, #fff);
+}
+
+/* 4. Slides stack inside the fixed stage.
+   Content must be laid out at 1920×1080, not reflowed per device. */
+.slide {
+    position: absolute;
+    inset: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    display: block;
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+    background: var(--slide-bg, #fff);
+}
+
+.slide.active,
+.slide.visible {
+    visibility: visible;
+    opacity: 1;
+    pointer-events: auto;
+    z-index: 1;
+}
+
+/* 5. Keep media inside authored slide bounds */
+img,
+video,
+canvas,
+svg {
+    max-width: 100%;
+    max-height: 100%;
+}
+
+/* 6. Presentation chrome stays outside the slide design system */
+.deck-controls {
+    position: fixed;
+    left: 50%;
+    bottom: 22px;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+
+/* 7. Print one fixed-size slide per page */
+@media print {
+    html,
+    body {
+        width: 1920px;
+        height: auto;
+        overflow: visible;
+        background: #fff;
+    }
+
+    .deck-viewport {
+        position: static;
+        overflow: visible;
+        background: #fff;
+    }
+
+    .deck-stage {
+        position: static;
+        width: auto;
+        height: auto;
+        transform: none !important;
+        background: none;
+    }
+
+    .slide {
+        position: relative;
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        width: 1920px;
+        height: 1080px;
+        break-after: page;
+        page-break-after: always;
+    }
+
+    .slide:last-child {
+        break-after: auto;
+        page-break-after: auto;
+    }
+
+    .deck-controls {
+        display: none !important;
+    }
+}
+
+/* 8. Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.2s !important;
+    }
+}
+
+/* ===========================================
+   SHARED SLIDE SURFACE
+   Paper grid, bright accents, and fixed frame.
+   =========================================== */
+.slide {
+    font-family: var(--font-cn);
+    color: var(--ink);
+}
+
+.paper {
+    background:
+        linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 48px 48px,
+        linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 48px 48px,
+        linear-gradient(135deg, transparent 0 61%, rgba(216, 255, 69, 0.35) 61% 66%, transparent 66%),
+        var(--paper);
+}
+
+.paper::before {
+    content: "";
+    position: absolute;
+    inset: 72px;
+    border: 2px solid var(--ink);
+    box-shadow: 14px 14px 0 var(--shadow);
+    pointer-events: none;
+}
+
+.title-slide,
+.closing {
+    --mx: 50%;
+    --my: 50%;
+    --mxn: 0;
+    --myn: 0;
+    background:
+        radial-gradient(circle at var(--mx) var(--my), rgba(255, 255, 255, 0.64), rgba(216, 255, 69, 0.14) 18%, transparent 34%),
+        linear-gradient(var(--line) 1px, transparent 1px) 0 0 / 48px 48px,
+        linear-gradient(90deg, var(--line) 1px, transparent 1px) 0 0 / 48px 48px,
+        linear-gradient(135deg, transparent 0 61%, rgba(216, 255, 69, 0.35) 61% 66%, transparent 66%),
+        var(--paper);
+}
+
+.title-slide::after,
+.closing::after {
+    transform: translate(calc(var(--mxn) * 18px), calc(var(--myn) * 10px));
+    transition: transform 120ms linear;
+}
+
+.paper::after {
+    content: "";
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: 260px;
+    height: 100%;
+    background: var(--accent-soft);
+    clip-path: polygon(46% 0, 100% 0, 100% 100%, 18% 100%);
+    opacity: 0.8;
+    pointer-events: none;
+}
+
+.slide-chrome {
+    position: absolute;
+    left: 112px;
+    top: 104px;
+    right: 112px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 0;
+    z-index: 2;
+}
+
+.slide-no {
+    color: var(--slide-accent, var(--coral));
+}
+
+.eyebrow {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--slide-accent, var(--coral));
+    text-transform: uppercase;
+}
+
+.slide-title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 96px;
+    line-height: 0.94;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
+.section-label {
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.tag {
+    display: inline-flex;
+    align-items: center;
+    min-height: 36px;
+    padding: 4px 12px;
+    border: 2px solid var(--ink);
+    background: var(--slide-accent, var(--coral));
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.panel,
+.card {
+    border: 2px solid var(--ink);
+    background: rgba(255, 248, 233, 0.86);
+    box-shadow: 8px 8px 0 var(--shadow);
+}
+
+.queue-card,
+.doing-card,
+.audit-row {
+    transition:
+        opacity 220ms var(--ease),
+        transform 220ms var(--ease),
+        box-shadow 220ms var(--ease),
+        border-color 220ms var(--ease),
+        filter 220ms var(--ease);
+}
+
+body:not(.editing) .visible .queue-card:hover:not(.dragging),
+body:not(.editing) .visible .doing-card:hover,
+body:not(.editing) .visible .audit-row:hover {
+    transform: translateY(-7px);
+    border-color: var(--slide-accent, var(--cobalt));
+    box-shadow: 13px 13px 0 var(--shadow);
+    filter: saturate(1.08);
+}
+
+.small {
+    font-size: 22px;
+    line-height: 1.38;
+}
+
+.muted {
+    color: var(--muted);
+}
+
+.reveal {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 520ms var(--ease), transform 520ms var(--ease);
+}
+
+.visible .reveal {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.visible .reveal:nth-child(2) { transition-delay: 70ms; }
+.visible .reveal:nth-child(3) { transition-delay: 130ms; }
+.visible .reveal:nth-child(4) { transition-delay: 190ms; }
+.visible .reveal:nth-child(5) { transition-delay: 250ms; }
+.visible .reveal:nth-child(6) { transition-delay: 310ms; }
+.visible .reveal:nth-child(7) { transition-delay: 370ms; }
+
+/* ===========================================
+   SLIDE 1: TITLE
+   Opening ledger with lively but restrained color.
+   =========================================== */
+.title-slide {
+    --slide-accent: var(--teal);
+    --accent-soft: rgba(0, 169, 157, 0.16);
+}
+
+.title-main {
+    position: absolute;
+    left: 112px;
+    top: 216px;
+    width: 980px;
+    z-index: 2;
+}
+
+.title-main h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 126px;
+    line-height: 0.88;
+    font-weight: 800;
+    letter-spacing: 0;
+}
+
+.title-main h1 span {
+    display: block;
+}
+
+.part-badge {
+    position: absolute;
+    left: 650px;
+    top: 246px;
+    padding: 10px 18px;
+    border: 3px solid var(--ink);
+    background: var(--rose);
+    box-shadow: 8px 8px 0 var(--shadow);
+    font-family: var(--font-mono);
+    font-size: 34px;
+    font-weight: 700;
+    line-height: 1;
+    transform: rotate(-4deg);
+}
+
+.title-cn {
+    margin-top: 30px;
+    font-size: 54px;
+    line-height: 1.16;
+    font-weight: 900;
+}
+
+.title-motto {
+    position: absolute;
+    right: 120px;
+    top: 188px;
+    width: 560px;
+    height: 255px;
+    padding: 34px 40px;
+    transform: rotate(-2deg);
+    z-index: 3;
+}
+
+.title-motto::before {
+    content: "";
+    position: absolute;
+    left: 40px;
+    right: 40px;
+    top: 70px;
+    border-top: 3px solid var(--rose);
+}
+
+.title-motto span {
+    display: block;
+    margin-top: 42px;
+    font-size: 42px;
+    font-weight: 900;
+    line-height: 1.22;
+}
+
+.title-motto small {
+    display: block;
+    margin-top: 12px;
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.allocation {
+    position: absolute;
+    right: 112px;
+    bottom: 112px;
+    width: 800px;
+    display: grid;
+    gap: 18px;
+    z-index: 2;
+}
+
+.allocation-row {
+    display: grid;
+    grid-template-columns: 132px 1fr 48px;
+    align-items: center;
+    min-height: 104px;
+}
+
+.allocation-row b {
+    height: 100%;
+    display: grid;
+    place-items: center;
+    border-right: 2px solid var(--ink);
+    font-family: var(--font-mono);
+    font-size: 46px;
+}
+
+.allocation-row span {
+    padding-left: 28px;
+    font-family: var(--font-mono);
+    font-size: 30px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.dot {
+    width: 34px;
+    height: 34px;
+    border: 2px solid var(--ink);
+    border-radius: 50%;
+}
+
+.dot.coral { background: var(--coral); }
+.dot.cobalt { background: var(--cobalt); }
+.dot.lemon { background: var(--lemon); }
+.title-note {
+    position: absolute;
+    left: 112px;
+    bottom: 150px;
+    width: 800px;
+    border-left: 12px solid var(--coral);
+    padding-left: 24px;
+    font-size: 24px;
+    font-weight: 900;
+    line-height: 1.36;
+    z-index: 2;
+}
+
+/* ===========================================
+   SLIDE 2: WRITING PROGRESS
+   Publication pipeline and collaboration lane.
+   =========================================== */
+.writing-progress {
+    --slide-accent: var(--coral);
+    --accent-soft: rgba(255, 90, 61, 0.18);
+}
+
+.progress-layout {
+    position: absolute;
+    left: 112px;
+    right: 112px;
+    top: 178px;
+    bottom: 112px;
+    display: grid;
+    grid-template-columns: 500px 1fr;
+    gap: 42px;
+    z-index: 2;
+}
+
+.quote-block {
+    padding: 36px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.quote-block .quote {
+    font-family: var(--font-display);
+    font-size: 96px;
+    line-height: 1;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.quote-block .sub {
+    margin-top: 26px;
+    font-size: 32px;
+    font-weight: 900;
+    line-height: 1.25;
+}
+
+.quote-source {
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.pipeline {
+    display: grid;
+    grid-template-columns: 1.18fr 0.82fr;
+    gap: 24px;
+}
+
+.track {
+    padding: 28px;
+}
+
+.track-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.pub-list {
+    display: grid;
+    gap: 12px;
+}
+
+.pub-row {
+    display: grid;
+    grid-template-columns: 44px 1fr auto;
+    gap: 14px;
+    align-items: start;
+    min-height: 86px;
+    padding: 14px;
+    border: 2px solid var(--ink);
+    background: rgba(255, 248, 233, 0.78);
+}
+
+.pub-row.modal-trigger {
+    cursor: pointer;
+}
+
+.pub-row.modal-trigger:hover {
+    background: rgba(255, 143, 179, 0.18);
+}
+
+.pub-row .idx {
+    font-family: var(--font-mono);
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--slide-accent);
+}
+
+.pub-row h3 {
+    margin: 0 0 5px;
+    font-size: 26px;
+    line-height: 1.12;
+}
+
+.pub-row p {
+    margin: 0;
+    font-size: 19px;
+    line-height: 1.32;
+    color: var(--muted);
+}
+
+.status {
+    padding: 4px 8px;
+    border: 2px solid var(--ink);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.status.wait { background: var(--lemon); }
+.status.done { background: var(--teal); }
+.status.send { background: var(--rose); }
+.status.revise { background: var(--gold); }
+
+.collab-note {
+    margin: 16px 0 0;
+    border-left: 8px solid var(--rose);
+    padding-left: 14px;
+    font-size: 22px;
+    line-height: 1.35;
+    font-weight: 500;
+}
+
+.topic-note {
+    margin: 22px 0 0;
+    color: rgba(16, 36, 42, 0.46);
+    font-size: 18px;
+    line-height: 1.45;
+    font-weight: 700;
+}
+
+/* ===========================================
+   SLIDE 3: WRITING QUEUE
+   Draggable ranking board for discussion order.
+   =========================================== */
+.writing-queue {
+    --slide-accent: var(--cobalt);
+    --accent-soft: rgba(37, 92, 255, 0.14);
+}
+
+.queue-head {
+    position: absolute;
+    left: 112px;
+    top: 178px;
+    width: 1520px;
+    z-index: 2;
+}
+
+.queue-head .slide-title {
+    font-size: 82px;
+}
+
+.queue-list {
+    position: absolute;
+    left: 112px;
+    right: 112px;
+    top: 332px;
+    bottom: 112px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-auto-rows: 1fr;
+    gap: 20px;
+    z-index: 2;
+}
+
+.queue-card {
+    position: relative;
+    padding: 22px 22px 22px 74px;
+    cursor: grab;
+    overflow: hidden;
+}
+
+.queue-card:active {
+    cursor: grabbing;
+}
+
+.queue-card.dragging {
+    opacity: 0.82;
+    transform: translateY(-8px) rotate(-2.5deg) scale(1.015);
+    border-color: var(--slide-accent);
+    box-shadow: 16px 16px 0 var(--shadow);
+    z-index: 5;
+}
+
+.queue-card::after {
+    content: "drag to reorder";
+    position: absolute;
+    right: 14px;
+    bottom: 12px;
+    padding: 3px 8px;
+    border: 2px solid var(--ink);
+    background: var(--lemon);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 700;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 180ms var(--ease), transform 180ms var(--ease);
+    pointer-events: none;
+}
+
+body:not(.editing) .queue-card:hover::after {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.queue-card.dragging::after {
+    opacity: 0;
+}
+
+.rank {
+    position: absolute;
+    left: 18px;
+    top: 18px;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border: 2px solid var(--ink);
+    background: var(--slide-accent);
+    font-family: var(--font-mono);
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.queue-card.dragging .rank {
+    animation: rankPulse 720ms ease-in-out infinite;
+}
+
+@keyframes rankPulse {
+    0%, 100% {
+        transform: scale(1);
+        background: var(--slide-accent);
+    }
+    50% {
+        transform: scale(1.18);
+        background: var(--lemon);
+    }
+}
+
+.queue-card h3 {
+    margin: 0 0 10px;
+    font-size: 27px;
+    line-height: 1.14;
+}
+
+.queue-card h3 .title-cont {
+    display: block;
+    margin-top: 6px;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+.queue-card p {
+    margin: 0 0 10px;
+    font-size: 19px;
+    line-height: 1.3;
+}
+
+.queue-card .ask {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 2px solid var(--line);
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.queue-card .lens {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid var(--line);
+    color: var(--muted);
+}
+
+.queue-card .lens + .ask {
+    padding-top: 0;
+    border-top: 0;
+}
+
+/* ===========================================
+   SLIDE 4: READING
+   Concept map for authors and problems.
+   =========================================== */
+.reading-map {
+    --slide-accent: var(--teal);
+    --accent-soft: rgba(0, 169, 157, 0.16);
+}
+
+.map-layout {
+    position: absolute;
+    left: 112px;
+    right: 112px;
+    top: 178px;
+    bottom: 112px;
+    display: grid;
+    grid-template-columns: 470px 1fr;
+    gap: 36px;
+    z-index: 2;
+}
+
+.map-intro {
+    padding: 34px;
+}
+
+.map-intro .slide-title {
+    font-size: 86px;
+}
+
+.concept-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-template-rows: 1fr 1fr;
+    gap: 18px;
+}
+
+.concept-card {
+    padding: 22px;
+    min-height: 235px;
+}
+
+.concept-card.wide {
+    grid-column: span 2;
+}
+
+.concept-card h3 {
+    margin: 0 0 12px;
+    font-size: 31px;
+    line-height: 1.12;
+}
+
+.concept-card p {
+    margin: 0;
+    font-size: 22px;
+    line-height: 1.35;
+}
+
+.concept-card .mark {
+    display: inline-block;
+    margin-bottom: 14px;
+    width: 46px;
+    height: 18px;
+    border: 2px solid var(--ink);
+}
+
+.concept-card.ellipsis-card {
+    display: grid;
+    align-content: center;
+    text-align: center;
+}
+
+.reading-quote {
+    grid-column: 4 / span 2;
+    align-self: end;
+    padding: 22px 26px;
+    border-left: 10px solid var(--teal);
+    font-family: "Noto Serif SC", serif;
+    font-size: 34px;
+    font-weight: 900;
+    line-height: 1.22;
+}
+
+.ellipsis-card .dots {
+    display: block;
+    font-family: var(--font-cn);
+    font-size: 78px;
+    font-weight: 800;
+    line-height: 1;
+}
+
+.ellipsis-card p {
+    margin-top: 22px;
+    font-size: 28px;
+    font-weight: 900;
+}
+
+/* ===========================================
+   SLIDE 5: MAKE THINGS HAPPEN
+   Projects board with concrete open loops.
+   =========================================== */
+.doing-board {
+    --slide-accent: var(--leaf);
+    --accent-soft: rgba(24, 170, 102, 0.18);
+}
+
+.doing-layout {
+    position: absolute;
+    left: 112px;
+    right: 112px;
+    top: 178px;
+    bottom: 112px;
+    z-index: 2;
+}
+
+.doing-grid {
+    margin-top: 26px;
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr 0.95fr;
+    gap: 20px;
+}
+
+.doing-quote {
+    grid-column: 2 / span 2;
+    align-self: center;
+    margin-bottom: 48px;
+    padding: 18px 22px;
+    border-left: 10px solid var(--leaf);
+    font-family: "Noto Serif SC", serif;
+    font-size: 23px;
+    font-weight: 900;
+    line-height: 1.28;
+}
+
+.doing-layout .slide-title {
+    margin-top: 26px;
+    font-size: 86px;
+}
+
+.doing-card {
+    min-height: 146px;
+    padding: 22px;
+}
+
+.doing-card h3 {
+    margin: 0 0 10px;
+    font-size: 30px;
+    line-height: 1.12;
+}
+
+.doing-card p {
+    margin: 0;
+    font-size: 20px;
+    line-height: 1.32;
+}
+
+.doing-card.tone-blue,
+.doing-card.tone-teal,
+.doing-card.tone-ink {
+    color: white;
+}
+
+.doing-card.tone-blue {
+    min-height: 312px;
+    background: var(--cobalt);
+}
+
+.doing-card.tone-teal {
+    background: var(--teal);
+}
+
+.doing-card.tone-ink {
+    background: var(--ink);
+}
+
+.doing-card.tone-coral { background: var(--coral); }
+.doing-card.tone-rose { background: var(--rose); }
+.doing-card.tone-gold { background: var(--gold); }
+.doing-card.tone-lime { background: var(--lemon); }
+
+.doing-card[class*="tone-"] h3,
+.doing-card[class*="tone-"] p {
+    color: inherit;
+}
+
+.doing-card.tone-blue h3,
+.doing-card.tone-blue p,
+.doing-card.tone-teal h3,
+.doing-card.tone-teal p,
+.doing-card.tone-ink h3,
+.doing-card.tone-ink p {
+    color: white;
+}
+
+/* ===========================================
+   SLIDE 6: INTERNATIONAL HORIZON
+   Two routes for international and disciplinary return.
+   =========================================== */
+.horizon {
+    --slide-accent: var(--rose);
+    --accent-soft: rgba(255, 143, 179, 0.18);
+}
+
+.horizon-layout {
+    position: absolute;
+    left: 112px;
+    right: 112px;
+    top: 178px;
+    bottom: 112px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 36px;
+    z-index: 2;
+}
+
+.route-panel {
+    padding: 34px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.route-panel h2 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 78px;
+    line-height: 0.96;
+}
+
+.route-list {
+    display: grid;
+    gap: 18px;
+    margin-top: 30px;
+}
+
+.route-item {
+    display: grid;
+    grid-template-columns: 50px 1fr;
+    gap: 18px;
+    align-items: start;
+}
+
+.route-item b {
+    width: 50px;
+    height: 50px;
+    display: grid;
+    place-items: center;
+    border: 2px solid var(--ink);
+    background: var(--slide-accent);
+    font-family: var(--font-mono);
+}
+
+.route-item p {
+    margin: 0;
+    font-size: 26px;
+    line-height: 1.34;
+}
+
+.route-footer {
+    margin-top: 36px;
+    padding-top: 20px;
+    border-top: 3px solid var(--ink);
+    font-family: var(--font-mono);
+    font-size: 24px;
+    font-weight: 700;
+}
+
+/* ===========================================
+   SLIDE 7: AUDIT
+   Areas for calibration without turning self-critical.
+   =========================================== */
+.audit {
+    --slide-accent: var(--gold);
+    --accent-soft: rgba(217, 154, 25, 0.18);
+}
+
+.audit-layout {
+    position: absolute;
+    left: 112px;
+    right: 112px;
+    top: 178px;
+    bottom: 112px;
+    display: grid;
+    grid-template-columns: 470px 1fr;
+    gap: 34px;
+    z-index: 2;
+}
+
+.audit-intro {
+    padding: 34px;
+}
+
+.audit-intro .slide-title {
+    font-size: 78px;
+    line-height: 0.92;
+}
+
+.audit-list {
+    display: grid;
+    gap: 10px;
+}
+
+.audit-row {
+    display: grid;
+    grid-template-columns: 64px 1fr;
+    gap: 20px;
+    align-items: start;
+    min-height: 100px;
+    padding: 16px 22px;
+}
+
+.audit-row b {
+    font-family: var(--font-mono);
+    font-size: 32px;
+    color: var(--slide-accent);
+}
+
+.audit-row h3 {
+    margin: 0 0 8px;
+    font-size: 30px;
+}
+
+.audit-row p {
+    margin: 0;
+    font-size: 19px;
+    line-height: 1.25;
+}
+
+.audit-row.key-row {
+    position: relative;
+    min-height: 132px;
+    border-width: 4px;
+    background: linear-gradient(90deg, rgba(216, 255, 69, 0.44), rgba(255, 143, 179, 0.18));
+    box-shadow: 10px 10px 0 var(--shadow);
+}
+
+.audit-row.key-row::after {
+    content: "DISSERTATION";
+    position: absolute;
+    right: 18px;
+    top: 14px;
+    padding: 3px 8px;
+    border: 2px solid var(--ink);
+    background: var(--rose);
+    font-family: var(--font-mono);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.audit-row.key-row b {
+    color: var(--cobalt);
+}
+
+.audit-row.key-row p {
+    max-width: 960px;
+    font-size: 19px;
+    line-height: 1.25;
+}
+
+/* ===========================================
+   SLIDE 8: CLOSING
+   Reflection page with fewer elements and stronger prose.
+   =========================================== */
+.closing {
+    --slide-accent: var(--teal);
+    --accent-soft: rgba(0, 169, 157, 0.16);
+}
+
+.closing-layout {
+    position: absolute;
+    left: 112px;
+    right: 112px;
+    top: 174px;
+    bottom: 112px;
+    display: grid;
+    grid-template-columns: 1fr 540px;
+    gap: 38px;
+    z-index: 2;
+}
+
+.closing-copy {
+    padding: 44px;
+}
+
+.closing-copy h2 {
+    margin: 0 0 34px;
+    font-family: var(--font-display);
+    font-size: 100px;
+    line-height: 0.95;
+}
+
+.closing-copy p {
+    margin: 0 0 24px;
+    font-family: "Noto Serif SC", serif;
+    font-size: 29px;
+    line-height: 1.42;
+    font-weight: 600;
+}
+
+.closing-quote {
+    margin-top: 24px;
+    padding-left: 20px;
+    border-left: 10px solid var(--teal);
+    font-size: 29px;
+    font-weight: 900;
+    line-height: 1.34;
+}
+
+/* ===========================================
+   JOURNAL MODAL
+   One small overlay for slide 2 publication notes.
+   =========================================== */
+.journal-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    place-items: center;
+    padding: 32px;
+    background: rgba(16, 36, 42, 0.5);
+    z-index: 10010;
+}
+
+.journal-modal.open {
+    display: grid;
+}
+
+.journal-card {
+    width: min(860px, 92vw);
+    max-height: 84vh;
+    overflow: auto;
+    border: 3px solid var(--ink);
+    background: var(--paper-light);
+    box-shadow: 12px 12px 0 var(--shadow);
+    padding: 34px;
+    color: var(--ink);
+}
+
+.journal-card h2 {
+    margin: 0 0 22px;
+    font-size: 36px;
+    line-height: 1.2;
+}
+
+.journal-card h3 {
+    margin: 24px 0 10px;
+    font-size: 25px;
+}
+
+.journal-card p {
+    margin: 8px 0;
+    font-size: 21px;
+    line-height: 1.45;
+}
+
+.journal-close {
+    float: right;
+    border: 2px solid var(--ink);
+    background: var(--rose);
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.closing-aside {
+    display: grid;
+    gap: 18px;
+}
+
+.closing-chip {
+    padding: 24px;
+    min-height: 130px;
+}
+
+.closing-chip b {
+    display: block;
+    margin-bottom: 8px;
+    font-family: var(--font-mono);
+    font-size: 22px;
+    color: var(--slide-accent);
+}
+
+.closing-chip span {
+    font-size: 26px;
+    font-weight: 900;
+    line-height: 1.28;
+}
+
+/* ===========================================
+   DECK CONTROLS AND EDITING
+   Controls live outside the 1920 x 1080 slide stage.
+   =========================================== */
+.deck-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    border: 1px solid rgba(255,255,255,0.22);
+    background: rgba(16, 36, 42, 0.78);
+    color: white;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    backdrop-filter: blur(10px);
+}
+
+.deck-controls button {
+    width: 28px;
+    height: 28px;
+    border: 1px solid rgba(255,255,255,0.28);
+    background: transparent;
+    color: white;
+    font: inherit;
+    cursor: pointer;
+}
+
+.edit-hotzone {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 80px;
+    height: 80px;
+    z-index: 10000;
+}
+
+.edit-toggle {
+    position: fixed;
+    left: 18px;
+    top: 18px;
+    width: 36px;
+    height: 36px;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: rgba(16, 36, 42, 0.86);
+    color: white;
+    z-index: 10001;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 180ms ease;
+}
+
+.edit-toggle.show,
+.edit-toggle.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.editing [data-editable] {
+    outline: 2px dashed var(--coral);
+    outline-offset: 4px;
+}
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+    <main class="deck-stage" id="deckStage">
+        <section class="slide paper title-slide active visible" data-slide-title="A Year of Starting">
+            <div class="slide-chrome reveal"><span data-editable data-edit-id="s1-name">Haoxuan</span><span data-editable data-edit-id="s1-date">2026.06.29</span></div>
+            <div class="title-main">
+                <h1 class="reveal" data-editable data-edit-id="s1-title"><span>A Year</span><span>of Starting</span></h1>
+                <div class="part-badge reveal">1 / 4</div>
+                <div class="title-cn reveal" data-editable data-edit-id="s1-cn">发文、读书、做事</div>
+            </div>
+            <div class="panel title-motto reveal">
+                <div class="eyebrow">long road</div>
+                <span data-editable data-edit-id="s1-motto">学术是一条长路，<br>路遥知马力<small>（陈师，202603）</small></span>
+            </div>
+            <div class="allocation reveal">
+                <div class="panel allocation-row"><b>50</b><span data-editable data-edit-id="s1-a1">发文 / Writing</span><i class="dot coral"></i></div>
+                <div class="panel allocation-row"><b>30</b><span data-editable data-edit-id="s1-a2">读书 / Reading</span><i class="dot cobalt"></i></div>
+                <div class="panel allocation-row"><b>20</b><span data-editable data-edit-id="s1-a3">做事 / SHI（make things happen）</span><i class="dot lemon"></i></div>
+            </div>
+            <div class="title-note reveal" data-editable data-edit-id="s1-note">…为了真正关怀自我，一个人必须倾听一位导师的教诲。需要一个向导、一个顾问、一个朋友——一个会告诉你真相的人（Foucault, 1987b, p. 287）</div>
+        </section>
+
+        <section class="slide paper writing-progress" data-slide-title="五成力发文">
+            <div class="slide-chrome reveal"><span class="slide-no">02 / 08</span><span>五成力 / Writing</span></div>
+            <div class="progress-layout">
+                <div class="panel quote-block reveal">
+                    <div>
+                        <div class="eyebrow">来自陈师的小目标</div>
+                        <div class="quote" data-editable data-edit-id="s2-quote">“十篇吧”</div>
+                        <div class="sub" data-editable data-edit-id="s2-sub">平衡自由探索与现实需求，做常规竞争。</div>
+                    </div>
+                    <div class="quote-source" data-editable data-edit-id="s2-note">不能还没上路，就被现实打败。（陈师，202603）</div>
+                </div>
+                <div class="pipeline">
+                    <div class="panel track reveal">
+                        <div class="track-title"><span class="section-label">main track</span><span class="tag">5 papers</span></div>
+                        <div class="pub-list">
+                            <div class="pub-row"><div class="idx">01</div><div><h3 data-editable data-edit-id="s2-p1">回音</h3><p data-editable data-edit-id="s2-p1d">2025.11 投《全球》；两轮返修，目前待终审。</p></div><span class="status wait">终审</span></div>
+                            <div class="pub-row"><div class="idx">02</div><div><h3 data-editable data-edit-id="s2-p2">加来道雄</h3><p data-editable data-edit-id="s2-p2d">已录用《科学教育研究》普刊；这样的 case 能发表出来也很好。</p></div><span class="status done">录用</span></div>
+                            <div class="pub-row modal-trigger" role="button" tabindex="0" data-modal-template="stem-journals"><div class="idx">03</div><div><h3 data-editable data-edit-id="s2-p3">农耕文化 STEM</h3><p data-editable data-edit-id="s2-p3d">待投，等陈老师定期刊。</p></div><span class="status send">待投</span></div>
+                            <div class="pub-row modal-trigger" role="button" tabindex="0" data-modal-template="practice-journals"><div class="idx">04</div><div><h3 data-editable data-edit-id="s2-p4">学科实践</h3><p data-editable data-edit-id="s2-p4d">待投，等陈老师定期刊。</p></div><span class="status send">待投</span></div>
+                            <div class="pub-row"><div class="idx">05</div><div><h3 data-editable data-edit-id="s2-p5">sputnik</h3><p data-editable data-edit-id="s2-p5d">待投，等陈老师修改。</p></div><span class="status revise">修改</span></div>
+                        </div>
+                        <p class="topic-note" data-editable data-edit-id="s2-main-note">课堂发言问题；Project zero；国际教育战略如何理解“未来”；Attention &amp; flow；跨课程；找一条体育赛道？</p>
+                    </div>
+                    <div class="panel track reveal">
+                        <div class="track-title"><span class="section-label">with friends</span><span class="tag">3 tries</span></div>
+                        <div class="pub-list">
+                            <div class="pub-row"><div class="idx">A</div><div><h3 data-editable data-edit-id="s2-c1">CCE review</h3><p data-editable data-edit-id="s2-c1d">和媛媛合作，已投出。</p></div><span class="status send">投出</span></div>
+                            <div class="pub-row"><div class="idx">B</div><div><h3 data-editable data-edit-id="s2-c2">learn about</h3><p data-editable data-edit-id="s2-c2d">和志远合作，已投出。</p></div><span class="status send">投出</span></div>
+                            <div class="pub-row"><div class="idx">C</div><div><h3 data-editable data-edit-id="s2-c3">加速主义</h3><p data-editable data-edit-id="s2-c3d">和澄宇老师合作，返修中。</p></div><span class="status revise">返修</span></div>
+                        </div>
+                        <p class="collab-note" data-editable data-edit-id="s2-c-note">不一定能成，但得以探索了一些新话题，了解别人是怎么做研究的</p>
+                        <p class="topic-note" data-editable data-edit-id="s2-friend-note">教材经验；优绩主义（保研数据）优绩到贤能？科学叙事数据-英文；严不严；Win 的框架、Safety in curriculum；顶尖科学家传记库……</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide paper writing-queue" data-slide-title="Writing Queue">
+            <div class="slide-chrome reveal"><span class="slide-no">03 / 08</span><span>Writing Queue</span></div>
+            <div class="queue-head reveal">
+                <div class="eyebrow">decision with Chenshi</div>
+                <h2 class="slide-title" data-editable data-edit-id="s3-title">手上在写的文章：需要确定写作顺序</h2>
+            </div>
+            <div class="queue-list" id="queueList">
+                <div class="card queue-card reveal" draggable="true" data-id="aera"><div class="rank">1</div><h3 data-editable data-edit-id="s3-1h">AERA：TOKENISM?<span class="title-cont">How Educational AI Products Are Talking About Educational Theory</span></h3><p class="ask" data-editable data-edit-id="s3-1a">是否联系云谷 AI 等，补充局内人访谈？</p></div>
+                <div class="card queue-card reveal" draggable="true" data-id="time-trap"><div class="rank">2</div><h3 data-editable data-edit-id="s3-2h">课程价值的时间陷阱</h3><p class="lens" data-editable data-edit-id="s3-2p">估值社会学的视角</p><p class="ask" data-editable data-edit-id="s3-2a">是否按目前的思路继续推进；<br>最近萦绕在心头的一个问题不再是到底如何给课程估值，而是知识的价值到底需要多少时间才可能；<br>是否做一个关于“知识学习的时间假设”的 review。</p></div>
+                <div class="card queue-card reveal" draggable="true" data-id="moe-data"><div class="rank">3</div><h3 data-editable data-edit-id="s3-3h">教育部提案答复数据</h3><p data-editable data-edit-id="s3-3p">什么知识最有价值/还不够有价值；价值如何被表征、被承认。</p><p class="ask" data-editable data-edit-id="s3-3a">0730 前交跨选作业。</p></div>
+                <div class="card queue-card reveal" draggable="true" data-id="textbook-ai"><div class="rank">4</div><h3 data-editable data-edit-id="s3-4h">智能时代科学教材的形态和标准</h3><p data-editable data-edit-id="s3-4p">课题申报失败后的修改。</p><p class="ask" data-editable data-edit-id="s3-4a">本子如何改？论文能否尝试写？是否还不够“宏大”？</p></div>
+                <div class="card queue-card reveal" draggable="true" data-id="frontier"><div class="rank">5</div><h3 data-editable data-edit-id="s3-5h">课程：有限的前沿</h3><p data-editable data-edit-id="s3-5p">前沿科技成果进课程的知识选择与转化路径。</p><p class="ask" data-editable data-edit-id="s3-5a">结合之前给肖老师查阅资料和本学期上课的思考，系统回答“知识的前沿与经典”问题。</p></div>
+                <div class="card queue-card reveal" draggable="true" data-id="narrative"><div class="rank">6</div><h3 data-editable data-edit-id="s3-6h">硕士毕业论文 / 科学叙事数据</h3><p data-editable data-edit-id="s3-6p">至少撰写成 2 篇小论文。</p><p class="ask" data-editable data-edit-id="s3-6a">投 NARST 和中英文期刊。</p></div>
+            </div>
+        </section>
+
+        <section class="slide paper reading-map" data-slide-title="三成力读书">
+            <div class="slide-chrome reveal"><span class="slide-no">04 / 08</span><span>三成力 / Reading</span></div>
+            <div class="map-layout">
+                <div class="panel map-intro reveal">
+                    <div class="eyebrow">Questions, Authors, Concepts</div>
+                    <h2 class="slide-title" data-editable data-edit-id="s4-title">“近两天”在读的议题与作者</h2>
+                    <p class="small muted" data-editable data-edit-id="s4-note">在期待中</p>
+                </div>
+                <div class="concept-grid">
+                    <div class="card concept-card reveal"><span class="mark" style="background:var(--coral)"></span><h3 data-editable data-edit-id="s4-c1h">西蒙娜·薇依</h3><p data-editable data-edit-id="s4-c1p">注意力；期待；科学与我们。</p></div>
+                    <div class="card concept-card reveal"><span class="mark" style="background:var(--cobalt)"></span><h3 data-editable data-edit-id="s4-c2h">阿伦特</h3><p data-editable data-edit-id="s4-c2p">《心智生活》：思考、意志、判断；《人的境况》。</p></div>
+                    <div class="card concept-card reveal"><span class="mark" style="background:var(--rose)"></span><h3 data-editable data-edit-id="s4-c3h">巴塔耶</h3><p data-editable data-edit-id="s4-c3p">尼采的笑声；非知论。</p></div>
+                    <div class="card concept-card wide reveal"><span class="mark" style="background:var(--teal)"></span><h3 data-editable data-edit-id="s4-c4h">维纳：Cybernetics</h3><p data-editable data-edit-id="s4-c4p">舵手、意图、反馈；如果 AIED 起点不是 AI 而是控制论，tech for edu 会不会不同？如何理解“游戏”？</p></div>
+                    <div class="card concept-card wide reveal"><span class="mark" style="background:var(--lemon)"></span><h3 data-editable data-edit-id="s4-c5h">估值社会学</h3><p data-editable data-edit-id="s4-c5p">价值与评价；知识如何被看见、表征、承认，以及需要多少时间才显现价值。</p></div>
+                    <div class="card concept-card ellipsis-card reveal"><span class="dots">……</span><p data-editable data-edit-id="s4-c6p">请陈师扔书</p></div>
+                    <div class="reading-quote reveal" data-editable data-edit-id="s4-quote">「书读进去，思想出来」</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide paper doing-board" data-slide-title="SHI 两成力 : Open Loops">
+            <div class="slide-chrome reveal"><span class="slide-no">05 / 08</span><span>SHI 两成力 : Open Loops</span></div>
+            <div class="doing-layout">
+                <div class="eyebrow reveal">make things happen</div>
+                <h2 class="slide-title reveal" data-editable data-edit-id="s5-title">两成力做事：哪些要试试？</h2>
+                <div class="doing-grid">
+                    <div class="card doing-card tone-blue reveal"><h3 data-editable data-edit-id="s5-1h">校长模拟器</h3><p data-editable data-edit-id="s5-1p">现在只有先去做和试，然后改进，这样去探索了。</p></div>
+                    <div class="card doing-card tone-coral reveal"><h3 data-editable data-edit-id="s5-2h">博资考改革</h3><p data-editable data-edit-id="s5-2p">1. 不是促进学习的评价<br>2. 不是真实情境的训练与学习<br>3. 给出替代方案</p></div>
+                    <div class="card doing-card tone-teal reveal"><h3 data-editable data-edit-id="s5-3h">游戏中的地理</h3><p data-editable data-edit-id="s5-3p">“我们所能做的最多是为学生打开一个可以踏入的空间，但这一步必须由他们自己迈出”。</p></div>
+                    <div class="card doing-card tone-gold reveal"><h3 data-editable data-edit-id="s5-4h">科技馆相关事项</h3><p data-editable data-edit-id="s5-4p">近期关注：交大的实习研究员项目，是否继续跟进。</p></div>
+                    <div class="card doing-card tone-rose reveal"><h3 data-editable data-edit-id="s5-5h">网站 / 播客设想</h3><p data-editable data-edit-id="s5-5p">不急于扩张，先判断是否能稳定产出和服务写作。学术八卦探索器。</p></div>
+                    <div class="card doing-card tone-lime reveal"><h3 data-editable data-edit-id="s5-6h">宋小科学课程建设</h3><p data-editable data-edit-id="s5-6p">思考如何更好地分析、呈现科学绘画等数据；考虑天工开物课程的更多可能与实施。</p></div>
+                    <div class="card doing-card tone-ink reveal"><h3 data-editable data-edit-id="s5-7h">贵州农村、县域教育调研</h3><p data-editable data-edit-id="s5-7p">7.10 - 7.17：不只是去放松、放假，不能总是只带着感受回来；带入更多作为研究者的视角和投入。</p></div>
+                    <div class="doing-quote reveal" data-editable data-edit-id="s5-quote">「更宽广的视野，更广阔的胸怀，更真实的生活，更能改造世界的可能性」</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide paper horizon" data-slide-title="International Horizon">
+            <div class="slide-chrome reveal"><span class="slide-no">06 / 08</span><span>International Horizon</span></div>
+            <div class="horizon-layout">
+                <div class="panel route-panel reveal">
+                    <div>
+                        <div class="eyebrow">France</div>
+                        <h2 data-editable data-edit-id="s6-left-title">寻找法国项目导师</h2>
+                        <div class="route-list">
+                            <div class="route-item"><b>1</b><p data-editable data-edit-id="s6-l1">明确可能对接的研究者与机构。</p></div>
+                            <div class="route-item"><b>2</b><p data-editable data-edit-id="s6-l2">寻找、探索、聚焦、输出、转译。</p></div>
+                        </div>
+                    </div>
+                    <div class="route-footer" data-editable data-edit-id="s6-left-footer">target: project mentor / possible visit</div>
+                </div>
+                <div class="panel route-panel reveal">
+                    <div>
+                        <div class="eyebrow">Science Education</div>
+                        <h2 data-editable data-edit-id="s6-right-title">重回科学教育</h2>
+                        <div class="route-list">
+                            <div class="route-item"><b>A</b><p data-editable data-edit-id="s6-r1">准备 ECER 两个科学教育报告。</p></div>
+                            <div class="route-item"><b>B</b><p data-editable data-edit-id="s6-r2">重新阅读近三年重要期刊、人物、书籍。</p></div>
+                            <div class="route-item"><b>C</b><p data-editable data-edit-id="s6-r3">特别关注欧洲科学教育研究者的议题和方法。</p></div>
+                        </div>
+                    </div>
+                    <div class="route-footer" data-editable data-edit-id="s6-right-footer">return with a wider map, not a narrower lane</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide paper audit" data-slide-title="A Frank Audit">
+            <div class="slide-chrome reveal"><span class="slide-no">07 / 08</span><span>A Frank Audit</span></div>
+            <div class="audit-layout">
+                <div class="panel audit-intro reveal">
+                    <div class="eyebrow">next calibration / Things to Improve</div>
+                    <h2 class="slide-title" data-editable data-edit-id="s7-title">值得继续<br>练习的地方</h2>
+                    <p class="small muted" data-editable data-edit-id="s7-note">不是自责清单，而是下一阶段要练的能力。（AI说的）</p>
+                </div>
+                <div class="audit-list">
+                    <div class="card audit-row reveal"><b>01</b><div><h3 data-editable data-edit-id="s7-1h">英文写作与发表</h3><p data-editable data-edit-id="s7-1p">还没有真正尝试过英文写作和发表。感觉到自己太过“不规范”？</p></div></div>
+                    <div class="card audit-row reveal"><b>02</b><div><h3 data-editable data-edit-id="s7-2h">更主动找数据</h3><p data-editable data-edit-id="s7-2p">不要只等合适材料出现，要更积极地创造数据入口。</p></div></div>
+                    <div class="card audit-row key-row reveal"><b>03</b><div><h3 data-editable data-edit-id="s7-3h">博士毕业论文方向</h3><p data-editable data-edit-id="s7-3p">博士毕业论文方向还没有思考。最近跟人聊天隐隐又想回了科学教育的自主知识体系问题，对西方现代科学的反思，但感觉还是太难了。</p></div></div>
+                    <div class="card audit-row reveal"><b>04</b><div><h3 data-editable data-edit-id="s7-4h">生活节奏</h3><p data-editable data-edit-id="s7-4p">玩得太多，太不孤独；也可视作对不确定性和混乱的练习。下学期不上课了，想回去做木工了。</p></div></div>
+                    <div class="card audit-row reveal"><b>05</b><div><h3 data-editable data-edit-id="s7-5h">及时写作与更大尺度思考</h3><p data-editable data-edit-id="s7-5p">想得多，写得不及时；探索还不够深入，要继续练习在更多结构和更宏观尺度上思考。</p></div></div>
+                    <div class="card audit-row reveal"><b>06</b><div><h3 data-editable data-edit-id="s7-6h">少说然后</h3><p data-editable data-edit-id="s7-6p">练习说话。一个预告：博士毕业论文后记我都想好，开头怎么写了。</p></div></div>
+                </div>
+            </div>
+        </section>
+
+        <section class="slide paper closing" data-slide-title="walking">
+            <div class="slide-chrome reveal"><span class="slide-no">08 / 08</span><span>walking</span></div>
+            <div class="closing-layout">
+                <div class="panel closing-copy reveal">
+                    <h2 data-editable data-edit-id="s8-title">Stay Humble,<br>Grow Wider</h2>
+                    <p data-editable data-edit-id="s8-p1">博一就结束了。去年在您家里，我说我还小，您说读博快得很。</p>
+                    <p data-editable data-edit-id="s8-p2">这一年成果不多、产出很慢，但基本做到了您曾说的“舒服和觉得每天都有成长感”。也开始探索，甚至喜欢上曾经完全不感兴趣的那些东西。</p>
+                    <p data-editable data-edit-id="s8-p3">同时，也在各种真实、突然的事件中多次感受到自己的不足、积淀不够。读博以后，世界更复杂了一点，对身边人的认识也更丰富了。</p>
+                    <p data-editable data-edit-id="s8-p4">好像的确在慢慢走向：把对世界非黑即白的判断，调整为在底线之外的各层灰度的理解。</p>
+                    <div class="closing-quote reveal" data-editable data-edit-id="s8-quote">「主动迈一步，难事上坚持多走一步，海阔天空退一步」（陈师，2026）</div>
+                </div>
+                <div class="closing-aside">
+                    <div class="card closing-chip reveal"><b>01</b><span data-editable data-edit-id="s8-c1">保持谦逊，愈发宽阔。</span></div>
+                    <div class="card closing-chip reveal"><b>02</b><span data-editable data-edit-id="s8-c2">不盯着人，盯着值得做的事。</span></div>
+                    <div class="card closing-chip reveal"><b>03</b><span data-editable data-edit-id="s8-c3">看起来目中无人，<br>可能恰恰是因为足够宽广。</span></div>
+                    <div class="card closing-chip reveal"><b>04</b><span data-editable data-edit-id="s8-c4">竭尽所能后，惊奇依旧存在</span></div>
+                </div>
+            </div>
+        </section>
+    </main>
+</div>
+
+<nav class="deck-controls" aria-label="Slide controls">
+    <button id="prevSlide" aria-label="Previous slide">‹</button>
+    <span id="slideCount">1 / 8</span>
+    <button id="nextSlide" aria-label="Next slide">›</button>
+</nav>
+<div class="edit-hotzone"></div>
+<button class="edit-toggle" id="editToggle" aria-label="Edit mode" title="Edit mode">✎</button>
+
+<div class="journal-modal" id="journalModal" aria-hidden="true">
+    <div class="journal-card" role="dialog" aria-modal="true" aria-labelledby="journalTitle">
+        <button class="journal-close" id="journalClose" type="button">close</button>
+        <div id="journalContent"></div>
+    </div>
+</div>
+
+<template id="stem-journals">
+    <h2 id="journalTitle">可以考虑投的刊物</h2>
+    <h3>（1）近期发了 STEM/STEAM 教育</h3>
+    <p><b>C刊：</b>全球教育展望；现代教育技术；电化教育研究；中国电化教育；华东师范大学学报（教育科学版）</p>
+    <p><b>C扩：</b>中小学管理</p>
+    <p><b>北核：</b>上海教育科研；教学与管理</p>
+    <h3>（2）近期发了跨学科主题学习</h3>
+    <p><b>C刊：</b>课程.教材.教法；基础教育；电化教育研究</p>
+    <p><b>C扩：</b>天津师范大学学报（基础教育版）</p>
+    <p><b>北核：</b>教育理论与实践；教学与管理；上海教育科研</p>
+</template>
+
+<template id="practice-journals">
+    <h2 id="journalTitle">可以考虑投的刊物</h2>
+    <h3>近期发“学科实践”相关</h3>
+    <p><b>C刊：</b>课程.教材.教法；教育科学</p>
+    <p><b>C扩：</b>教育科学研究；天津师范大学学报（基础教育版）</p>
+    <p><b>北核：</b>教学与管理；教育理论与实践；当代教育科学；上海教育科研</p>
+    <p><b>普刊：</b>中小学科学教育；科学教育研究</p>
+</template>
+
+<script>
+/* ===========================================
+   SLIDE PRESENTATION CONTROLLER
+   Handles fixed-stage scaling and navigation.
+   =========================================== */
+class SlidePresentation {
+    constructor() {
+        this.slides = Array.from(document.querySelectorAll(".slide"));
+        this.stage = document.getElementById("deckStage");
+        this.counter = document.getElementById("slideCount");
+        this.currentSlide = 0;
+        this.wheelLocked = false;
+        this.setupStageScale();
+        this.setupNavigation();
+        this.setupTouch();
+        this.setupHash();
+        this.showSlide(this.indexFromHash());
+    }
+
+    setupStageScale() {
+        const scale = () => {
+            const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+            const x = (window.innerWidth - 1920 * factor) / 2;
+            const y = (window.innerHeight - 1080 * factor) / 2;
+            this.stage.style.transform = `translate(${x}px, ${y}px) scale(${factor})`;
+        };
+        scale();
+        window.addEventListener("resize", scale);
+    }
+
+    setupNavigation() {
+        document.getElementById("prevSlide").addEventListener("click", () => this.prev());
+        document.getElementById("nextSlide").addEventListener("click", () => this.next());
+        document.addEventListener("keydown", (event) => {
+            if (event.target && event.target.isContentEditable) return;
+            if (["ArrowRight", "PageDown", " "].includes(event.key)) {
+                event.preventDefault();
+                this.next();
+            }
+            if (["ArrowLeft", "PageUp"].includes(event.key)) {
+                event.preventDefault();
+                this.prev();
+            }
+        });
+        window.addEventListener("wheel", (event) => {
+            if (this.wheelLocked || Math.abs(event.deltaY) < 24) return;
+            this.wheelLocked = true;
+            event.deltaY > 0 ? this.next() : this.prev();
+            setTimeout(() => { this.wheelLocked = false; }, 520);
+        }, { passive: true });
+    }
+
+    setupTouch() {
+        let startX = 0;
+        let startY = 0;
+        window.addEventListener("touchstart", (event) => {
+            startX = event.touches[0].clientX;
+            startY = event.touches[0].clientY;
+        }, { passive: true });
+        window.addEventListener("touchend", (event) => {
+            const touch = event.changedTouches[0];
+            const dx = touch.clientX - startX;
+            const dy = touch.clientY - startY;
+            if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) {
+                dx < 0 ? this.next() : this.prev();
+            }
+        }, { passive: true });
+    }
+
+    setupHash() {
+        window.addEventListener("hashchange", () => this.showSlide(this.indexFromHash(), false));
+    }
+
+    indexFromHash() {
+        const value = Number(String(location.hash).replace("#", ""));
+        if (!Number.isFinite(value) || value < 1) return 0;
+        return Math.min(value - 1, this.slides.length - 1);
+    }
+
+    showSlide(index, updateHash = true) {
+        this.currentSlide = Math.max(0, Math.min(index, this.slides.length - 1));
+        this.slides.forEach((slide, i) => {
+            slide.classList.toggle("active", i === this.currentSlide);
+            slide.classList.toggle("visible", i === this.currentSlide);
+        });
+        this.counter.textContent = `${this.currentSlide + 1} / ${this.slides.length}`;
+        if (updateHash) history.replaceState(null, "", `#${this.currentSlide + 1}`);
+    }
+
+    next() {
+        this.showSlide(this.currentSlide + 1);
+    }
+
+    prev() {
+        this.showSlide(this.currentSlide - 1);
+    }
+}
+
+/* ===========================================
+   INLINE EDITOR
+   Lightweight local edits saved in localStorage.
+   =========================================== */
+class InlineEditor {
+    constructor() {
+        this.isActive = false;
+        this.key = "a-year-of-starting-edits";
+        this.edits = JSON.parse(localStorage.getItem(this.key) || "{}");
+        this.items = Array.from(document.querySelectorAll("[data-editable]"));
+        this.items.forEach((item) => {
+            const id = item.dataset.editId;
+            if (this.edits[id]) item.innerHTML = this.edits[id];
+            item.addEventListener("input", () => {
+                this.edits[id] = item.innerHTML;
+                localStorage.setItem(this.key, JSON.stringify(this.edits));
+            });
+        });
+    }
+
+    toggle() {
+        this.isActive = !this.isActive;
+        document.body.classList.toggle("editing", this.isActive);
+        this.items.forEach((item) => {
+            item.setAttribute("contenteditable", this.isActive ? "true" : "false");
+        });
+        document.getElementById("editToggle").classList.toggle("active", this.isActive);
+    }
+}
+
+/* ===========================================
+   QUEUE SORTING
+   Slide 3 cards can be reordered and saved locally.
+   =========================================== */
+function setupQueueSorting(editor) {
+    const list = document.getElementById("queueList");
+    if (!list) return;
+    const key = "a-year-of-starting-queue-order";
+    const saved = JSON.parse(localStorage.getItem(key) || "[]");
+    if (saved.length) {
+        saved.forEach((id) => {
+            const card = list.querySelector(`[data-id="${id}"]`);
+            if (card) list.appendChild(card);
+        });
+    }
+
+    let dragged = null;
+    const updateRanks = () => {
+        Array.from(list.children).forEach((card, index) => {
+            card.querySelector(".rank").textContent = index + 1;
+        });
+        localStorage.setItem(key, JSON.stringify(Array.from(list.children).map((card) => card.dataset.id)));
+    };
+
+    list.addEventListener("dragstart", (event) => {
+        if (editor.isActive) {
+            event.preventDefault();
+            return;
+        }
+        dragged = event.target.closest(".queue-card");
+        if (dragged) dragged.classList.add("dragging");
+    });
+
+    list.addEventListener("dragend", () => {
+        if (dragged) dragged.classList.remove("dragging");
+        dragged = null;
+        updateRanks();
+    });
+
+    list.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        if (!dragged) return;
+        const after = Array.from(list.querySelectorAll(".queue-card:not(.dragging)")).find((card) => {
+            const box = card.getBoundingClientRect();
+            return event.clientY < box.top + box.height / 2 && event.clientX < box.right;
+        });
+        after ? list.insertBefore(dragged, after) : list.appendChild(dragged);
+    });
+
+    updateRanks();
+}
+
+/* ===========================================
+   JOURNAL MODAL
+   Opens optional journal lists from slide 2 rows.
+   =========================================== */
+function setupJournalModal(editor) {
+    const modal = document.getElementById("journalModal");
+    const content = document.getElementById("journalContent");
+    const close = document.getElementById("journalClose");
+    const openModal = (id) => {
+        const template = document.getElementById(id);
+        if (!template) return;
+        content.replaceChildren(template.content.cloneNode(true));
+        modal.classList.add("open");
+        modal.setAttribute("aria-hidden", "false");
+        close.focus();
+    };
+    const closeModal = () => {
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+    };
+
+    document.querySelectorAll("[data-modal-template]").forEach((row) => {
+        row.addEventListener("click", () => {
+            if (!editor.isActive) openModal(row.dataset.modalTemplate);
+        });
+        row.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                if (!editor.isActive) openModal(row.dataset.modalTemplate);
+            }
+        });
+    });
+    close.addEventListener("click", closeModal);
+    modal.addEventListener("click", (event) => {
+        if (event.target === modal) closeModal();
+    });
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && modal.classList.contains("open")) closeModal();
+    });
+}
+
+/* ===========================================
+   POINTER LIGHT
+   A restrained mouse-following highlight on title and closing.
+   =========================================== */
+function setupPointerLight(deck) {
+    const reset = (slide) => {
+        if (!slide) return;
+        slide.style.setProperty("--mx", "50%");
+        slide.style.setProperty("--my", "50%");
+        slide.style.setProperty("--mxn", "0");
+        slide.style.setProperty("--myn", "0");
+    };
+    const isLightSlide = (slide) => slide && (slide.classList.contains("title-slide") || slide.classList.contains("closing"));
+
+    window.addEventListener("pointermove", (event) => {
+        const slide = deck.slides[deck.currentSlide];
+        if (!isLightSlide(slide)) return;
+        const rect = slide.getBoundingClientRect();
+        const x = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+        const y = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height));
+        slide.style.setProperty("--mx", `${x * 100}%`);
+        slide.style.setProperty("--my", `${y * 100}%`);
+        slide.style.setProperty("--mxn", String((x - 0.5) * 2));
+        slide.style.setProperty("--myn", String((y - 0.5) * 2));
+    });
+    window.addEventListener("pointerleave", () => reset(deck.slides[deck.currentSlide]));
+    window.addEventListener("hashchange", () => deck.slides.forEach(reset));
+}
+
+/* ===========================================
+   BOOTSTRAP
+   Initializes navigation, editing, and sorting.
+   =========================================== */
+const deck = new SlidePresentation();
+const editor = new InlineEditor();
+setupQueueSorting(editor);
+setupJournalModal(editor);
+setupPointerLight(deck);
+
+const hotzone = document.querySelector(".edit-hotzone");
+const editToggle = document.getElementById("editToggle");
+let hideEdit = null;
+hotzone.addEventListener("mouseenter", () => {
+    clearTimeout(hideEdit);
+    editToggle.classList.add("show");
+});
+hotzone.addEventListener("mouseleave", () => {
+    hideEdit = setTimeout(() => {
+        if (!editor.isActive) editToggle.classList.remove("show");
+    }, 400);
+});
+editToggle.addEventListener("mouseenter", () => clearTimeout(hideEdit));
+editToggle.addEventListener("mouseleave", () => {
+    hideEdit = setTimeout(() => {
+        if (!editor.isActive) editToggle.classList.remove("show");
+    }, 400);
+});
+hotzone.addEventListener("click", () => editor.toggle());
+editToggle.addEventListener("click", () => editor.toggle());
+document.addEventListener("keydown", (event) => {
+    if ((event.key === "e" || event.key === "E") && !(event.target && event.target.isContentEditable)) {
+        editor.toggle();
+    }
+});
+</script>
+</body>
+</html>
